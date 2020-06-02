@@ -23,7 +23,9 @@ environment:
 dependencies:
   provider: ^2.0.0+1
   flutter_map: any
+  rflutter_alert: any
   geojson: any
+  poly: any
   map_controller: any
   flutter:
     sdk: flutter

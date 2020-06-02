@@ -7,10 +7,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
+//Third party library used to do polygon maths
+import 'package:poly/poly.dart' as customPolygon;
 
 
 //Main model class to load polygons from API
 class PolygonModel with ChangeNotifier {
+  //Hashmap to find polygon name
+  Map<Polygon, String>  polygonsNames = new Map<Polygon, String>();
   // API url
   String URL='https://native-land.ca/api/index.php?maps=languages,territories,treaties&position=';
 
@@ -27,15 +31,20 @@ class PolygonModel with ChangeNotifier {
         var features = map["geometry"] as Map<String, dynamic>;
         var properties = map["properties"] as Map<String, dynamic>;
         Color color;
+        String name="";
         //get  properties
         properties.forEach((key, value) {
           //get color
           if (key == "color") {
             color = hexToColor(value);
           }
+          // get Polygon name
+          if (key == "Name") {
+            name = value;
+          }
         });
         //get coordinates
-        if (features != null) print("features" + features.keys.toString());
+
         List<LatLng> _points = new List<LatLng>();
 
         features.forEach((key, value) {
@@ -51,21 +60,46 @@ class PolygonModel with ChangeNotifier {
           //create new Polygon
           Polygon polygon = new Polygon(
               color: color,
-              points: _points
+              points: _points,
+
           );
 
           //Add polygon to list
           polygons.add(polygon);
+          polygonsNames[polygon]= name;
         }
           });
 
       }
     }
+
     return polygons;
 }
+// Return Polygon name
+ String getPolygonName(Polygon polygon){
+    return  polygonsNames[polygon];
 
+ }
 // Method to convert Color code to hex
   Color hexToColor(String code) {
     return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000).withOpacity(.2);
   }
+
+  // Method to convert flutter map polygons to custom polygons from third party library used to do polygon maths
+  List<customPolygon.Polygon> initPolygons(List<Polygon> polygons ){
+    List<customPolygon.Polygon> _polygons= new  List<customPolygon.Polygon>();
+    for (var i = 0; i < polygons.length; i++) {
+      List<customPolygon.Point<num>>_points = new List<customPolygon.Point<num>>();
+
+      for (var j = 0; j < polygons[i].points.length; j++) {
+
+        _points.add(new  customPolygon.Point(polygons[i].points[j].latitude, polygons[i].points[j].longitude));
+      }
+      _polygons.add(new customPolygon.Polygon(_points));
+    }
+    return _polygons;
+
+  }
+
+
 }
